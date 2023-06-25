@@ -16,7 +16,7 @@ import (
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 
-var defaultEnabledServices = []string{"network", "compute", "image", "volume", "identity", "object-store", "load-balancer", "container-infra", "dns", "baremetal", "gnocchi", "database", "orchestration", "placement"}
+var defaultEnabledServices = []string{"network", "compute", "computeWithTeam", "image", "volume", "identity", "object-store", "load-balancer", "container-infra", "dns", "baremetal", "gnocchi", "database", "orchestration", "placement"}
 
 var DEFAULT_OS_CLIENT_CONFIG = "/etc/openstack/clouds.yaml"
 
@@ -166,6 +166,8 @@ func metricHandler(services map[string]*bool) http.HandlerFunc {
 
 		registry := prometheus.NewPedanticRegistry()
 		enabledExporters := 0
+		//prepare Team Exporter
+		services = prepareTeam(services, cloud, endpointType)
 		for service, disabled := range services {
 			if !*disabled {
 				exp, err := exporters.EnableExporter(service, *prefix, *cloud, *disabledMetrics, *endpointType, *collectTime, *disableSlowMetrics, *disableDeprecatedMetrics, *disableCinderAgentUUID, *domainID, nil)
@@ -188,4 +190,23 @@ func metricHandler(services map[string]*bool) http.HandlerFunc {
 		h := promhttp.HandlerFor(registry, promhttp.HandlerOpts{})
 		h.ServeHTTP(w, r)
 	}
+}
+
+func prepareTeam(services map[string]*bool, cloud *string, endpointType *string) map[string]*bool {
+	var err error
+	if teamexporterIsDisable := *services["computeWithTeam"]; !teamexporterIsDisable {
+		//Disable Original Compute exporter
+		computeServiceState := *services["compute"]
+		*services["compute"] = true
+		exporters.TeamServiceClient, err = exporters.NewTeamServiceClient(*cloud, *endpointType)
+		if err != nil {
+			// if registering computeWithTeam failed, then enable original compute exporter
+			log.Errorf("enabling exporter for service %s failed: %s", "team-identity", err)
+			*services["compute"] = computeServiceState
+			*services["computeWithTeam"] = true
+		} else {
+			go exporters.UpdateProjectIDTeamMap()
+		}
+	}
+	return services
 }
