@@ -193,18 +193,19 @@ func metricHandler(services map[string]*bool) http.HandlerFunc {
 }
 
 func prepareTeam(services map[string]*bool, cloud *string, endpointType *string) map[string]*bool {
-	var err error
-	if teamexporterIsDisable := *services["computeWithTeam"]; !teamexporterIsDisable {
+	if !*services["computeWithTeam"] {
 		//Disable Original Compute exporter
 		computeServiceState := *services["compute"]
 		*services["compute"] = true
-		exporters.TeamServiceClient, err = exporters.NewTeamServiceClient(*cloud, *endpointType)
+
+		client, err := exporters.NewTeamServiceClient(*cloud, *endpointType)
 		if err != nil {
 			// if registering computeWithTeam failed, then enable original compute exporter
 			log.Errorf("enabling exporter for service %s failed: %s", "team-identity", err)
 			*services["compute"] = computeServiceState
 			*services["computeWithTeam"] = true
 		} else {
+			exporters.TeamServiceClient = client
 			go exporters.UpdateProjectIDTeamMap()
 		}
 	}

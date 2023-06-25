@@ -13,13 +13,14 @@ import (
 )
 
 // TeamSuffix is suffix of labels on tenenat e.g: test-team
-const TeamSuffix string = "-team"
+const TeamSuffix = "-team"
 
-// tenant_id:teamName
-var projectIDTeamMap = make(map[string]string)
-var projectIDTeamMapMutex sync.RWMutex
+var (
+	projectIDTeamMap      = make(map[string]string)
+	projectIDTeamMapMutex sync.RWMutex
+)
 
-// get team name from projectIDTeamMa
+// getTeam retrieves the team name from projectIDTeamMap
 func getTeam(tenantId string) string {
 	projectIDTeamMapMutex.RLock()
 	teamName := projectIDTeamMap[tenantId]
@@ -39,22 +40,25 @@ func UpdateProjectIDTeamMap() {
 	}
 
 	allProjects, err := listAllProjects()
-	if err == nil {
-		ProjectsWithTeamTag := getProjectsWithTeamTag(allProjects)
-		projectIDTeamMapMutex.Lock()
-		go func() {
-			for _, p := range ProjectsWithTeamTag {
-				projectIDTeamMap[p.ID] = extractTeamFromTags(p.Tags)
+	if err != nil {
+		log.Errorf("could not get projects: %s", err)
+		return
+	} else {
 
-			}
-		}()
-		projectIDTeamMapMutex.Unlock()
+		ProjectsWithTeamTag := getProjectsWithTeamTag(allProjects)
+
+		projectIDTeamMapMutex.Lock()
+		defer projectIDTeamMapMutex.Unlock()
+		for _, p := range ProjectsWithTeamTag {
+			projectIDTeamMap[p.ID] = extractTeamFromTags(p.Tags)
+		}
 	}
 }
 
 // getProjectsWithTeamTag get all projects and return list of project that has -team label
 func getProjectsWithTeamTag(projs []projects.Project) []projects.Project {
-	projectsWtihTeamTag := make([]projects.Project, 0)
+	var projectsWtihTeamTag []projects.Project
+
 	isTagsContainTeam := func(tags []string) bool {
 		for _, tag := range tags {
 			if strings.HasSuffix(tag, TeamSuffix) {
@@ -75,15 +79,13 @@ func getProjectsWithTeamTag(projs []projects.Project) []projects.Project {
 // listAllProject return all projects that get from openstack.
 func listAllProjects() ([]projects.Project, error) {
 
-	var allProjects []projects.Project
-
 	allPagesProject, err := projects.List(TeamServiceClient, projects.ListOpts{}).AllPages()
 	if err != nil {
 		log.Errorf("could not get projects: %s", err)
 		return nil, err
 	}
 
-	allProjects, err = projects.ExtractProjects(allPagesProject)
+	allProjects, err := projects.ExtractProjects(allPagesProject)
 	if err != nil {
 		log.Errorf("projects Extrcat failed: %s", err)
 		return nil, err
