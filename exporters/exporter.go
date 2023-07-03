@@ -248,6 +248,13 @@ func NewExporter(name, prefix, cloud string, disabledMetrics []string, endpointT
 				return nil, err
 			}
 		}
+	case "computeWithTeam":
+		{
+			exporter, err = NewNovaTeamExporter(&exporterConfig)
+			if err != nil {
+				return nil, err
+			}
+		}
 	case "image":
 		{
 			exporter, err = NewGlanceExporter(&exporterConfig)
