@@ -46,6 +46,7 @@ func NewNovaTeamExporter(config *ExporterConfig) (*NovaExporter, error) {
 
 // NovaTeamListAllServers is copy of ListAllServers in nova.go + team label
 func NovaTeamListAllServers(exporter *BaseOpenStackExporter, ch chan<- prometheus.Metric) error {
+	UpdateProjectIDTeamMap()
 	type ServerWithExt struct {
 		servers.Server
 		availabilityzones.ServerAvailabilityZoneExt

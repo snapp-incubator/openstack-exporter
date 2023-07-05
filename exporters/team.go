@@ -30,6 +30,7 @@ func getTeam(tenantId string) string {
 
 // UpdateProjectIDTeamMap job is get and set tenant_id:teamName to projectIDTeamMap
 func UpdateProjectIDTeamMap() {
+	log.Info("Updating ProjectID Team Map...")
 	extractTeamFromTags := func(tags []string) (tag string) {
 		for _, t := range tags {
 			if strings.HasSuffix(t, TeamSuffix) {
@@ -73,6 +74,7 @@ func getProjectsWithTeamTag(projs []projects.Project) []projects.Project {
 			projectsWtihTeamTag = append(projectsWtihTeamTag, p)
 		}
 	}
+	log.Info("ProjectID Team Map Updated.")
 	return projectsWtihTeamTag
 }
 

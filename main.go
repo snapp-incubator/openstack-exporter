@@ -107,7 +107,6 @@ func prepareTeam(services map[string]*bool, cloud *string, endpointType *string)
 			*services["computeWithTeam"] = true
 		} else {
 			exporters.TeamServiceClient = client
-			go exporters.UpdateProjectIDTeamMap()
 		}
 	}
 	return services
