@@ -112,6 +112,8 @@ func NewServiceClient(service string, opts *clientconfig.ClientOpts, transport *
 		return openstack.NewClusteringV1(pClient, eo)
 	case "compute":
 		return openstack.NewComputeV2(pClient, eo)
+	case "computeWithTeam":
+		return openstack.NewComputeV2(pClient, eo)
 	case "container":
 		return openstack.NewContainerV1(pClient, eo)
 	case "container-infra":
