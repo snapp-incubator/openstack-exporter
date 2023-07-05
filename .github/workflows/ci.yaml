@@ -2,7 +2,7 @@
 name: ci
 on:
   push:
-    branches: [ main, "v*" ]
+    branches: [ main, "release-" ]
     tags: [ v* ]
 
 jobs:
