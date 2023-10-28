@@ -6,11 +6,8 @@ COPY . .
 
 RUN go mod download && go build -o /openstack-exporter .
 
-FROM busybox:stable-glibc as openstack-exporter
+FROM quay.io/openstack.kolla/prometheus-openstack-exporter:2023.1-ubuntu-jammy as openstack-exporter
 
-LABEL maintainer="Jorge Niedbalski <j@bearmetal.xyz>"
+COPY --from=build /openstack-exporter /opt/openstack-exporter/openstack-exporter
 
-COPY --from=build /openstack-exporter /bin/openstack-exporter
 
-ENTRYPOINT [ "/bin/openstack-exporter" ]
-EXPOSE 9180
